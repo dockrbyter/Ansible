@@ -1,0 +1,35 @@
+---
+- name: filecopy
+  hosts: all
+  gather_facts: yes
+  vars:
+    zielordner: /var/playmetadata
+    quellordner: /mnt/c/Users/Max.PREDATOR/Documents/Git/ansible/playbooks/copycontent
+    script: getplaytime.sh
+    user: root
+  tasks:
+    - name: I   Ordner auf Zielsystem erstellen
+      file:
+        path: '{{zielordner}}'
+        state: directory
+        owner: '{{user}}'
+        group: '{{user}}'
+        mode: 0775
+        recurse: yes
+    - name: II   Datei kopieren und Rechte setzen
+      copy:
+        src: '{{quellordner}}/{{script}}'
+        dest: '{{zielordner}}/{{script}}'
+        owner: '{{user}}'
+        group: '{{user}}'
+        mode: u+rwx,g+rwx,o+rwx
+    - name: III   Script ausfuehren
+      command: sh '{{zielordner}}/{{script}}'
+    - name: IV   Script Output downloaden
+      ansible.builtin.fetch:
+        src: '{{zielordner}}/timestamp.txt'
+        dest: '{{quellordner}}/Inbound_{{ansible_date_time.iso8601}}'
+    - name: V   Remote Files loeschen
+      file:
+        state: absent
+        path: '{{zielordner}}'
